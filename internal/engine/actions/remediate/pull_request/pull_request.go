@@ -23,6 +23,7 @@ import (
 	"fmt"
 	htmltemplate "html/template"
 	"os"
+	"regexp"
 	"strings"
 	"text/template"
 	"time"
@@ -38,6 +39,8 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	"github.com/stacklok/minder/internal/db"
+	enginerr "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/util"
@@ -75,6 +78,38 @@ type Remediator struct {
 
 	titleTemplate *htmltemplate.Template
 	bodyTemplate  *htmltemplate.Template
+}
+
+// prSlug is a string that identifies a pull request. It is a string formatted
+// as "organization/repository#number", for example:
+//
+//	github:stacklok/minder#12345
+type prSlug string
+
+var prSlugRe = regexp.MustCompile(`^(?i)([a-z0-9][-_a-z0-9\.]*)+:(?:([-_a-z0-9\.]+))?(?:\/([-_a-z0-9\.]+))?(?:\#(\d+))?$`)
+
+// MarshalJSON marshals the slug bits into a json struct
+func (s prSlug) MarshalJSON() ([]byte, error) {
+	p := s.Parse()
+	return json.Marshal(struct {
+		Provider     string
+		Organization string
+		Repository   string
+		Number       string
+	}{
+		Provider:     p[0],
+		Organization: p[1],
+		Repository:   p[2],
+		Number:       p[3],
+	})
+}
+
+// Parse returns parses the pr slug and returns its components:
+// provider, org, repository and PR number.
+func (s prSlug) Parse() []string {
+	parts := prSlugRe.FindStringSubmatch(string(s))
+	parts = append(parts, make([]string, 5-len(parts))...)
+	return parts[1:]
 }
 
 // NewPullRequestRemediate creates a new PR remediation engine
@@ -143,6 +178,8 @@ func (_ *Remediator) GetOnOffState(p *pb.Profile) interfaces.ActionOpt {
 }
 
 // Do performs the remediation
+//
+//nolint:gocyclo
 func (r *Remediator) Do(
 	ctx context.Context,
 	_ interfaces.ActionCmd,
@@ -197,25 +234,37 @@ func (r *Remediator) Do(
 		return nil, fmt.Errorf("cannot create PR full body text: %w", err)
 	}
 
-	var remErr error
 	switch remAction {
 	case interfaces.ActionOptOn:
-		alreadyExists, err := prWithContentAlreadyExists(ctx, r.ghCli, repo, magicComment)
+		slug, err := prWithContentAlreadyExists(ctx, r.ghCli, repo, magicComment)
 		if err != nil {
 			return nil, fmt.Errorf("cannot check if PR already exists: %w", err)
 		}
-		if alreadyExists {
-			zerolog.Ctx(ctx).Info().Msg("PR already exists, won't create a new one")
-			return nil, nil
+
+		if slug == "" {
+			slug, err = r.runGit(
+				ctx, ingested.Fs, ingested.Storer, modification, repo, title.String(), prFullBodyText,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("creating remediation PR: %w", err)
+			}
+		} else {
+			zerolog.Ctx(ctx).Info().Msgf("PR %s already exists, won't create a new one", slug)
 		}
-		remErr = r.runGit(ctx, ingested.Fs, ingested.Storer, modification, repo, title.String(), prFullBodyText)
+
+		return json.Marshal(enginerr.RemediationMetadata{
+			Status:     db.RemediationStatusTypesPending,
+			StatusData: slug,
+		})
+
 	case interfaces.ActionOptDryRun:
 		r.dryRun(modification, title.String(), prFullBodyText)
-		remErr = nil
+		return nil, nil
 	case interfaces.ActionOptOff, interfaces.ActionOptUnknown:
-		remErr = errors.New("unexpected action")
+		return nil, errors.New("unexpected remediation action")
+	default:
+		return nil, errors.New("unknown remediation action")
 	}
-	return nil, remErr
 }
 
 func (_ *Remediator) dryRun(modifier fsModifier, title, body string) {
@@ -236,33 +285,33 @@ func (r *Remediator) runGit(
 	modifier fsModifier,
 	pbRepo *pb.Repository,
 	title, body string,
-) error {
+) (prSlug, error) {
 	logger := zerolog.Ctx(ctx).With().Str("repo", pbRepo.String()).Logger()
 
 	repo, err := git.Open(storer, fs)
 	if err != nil {
-		return fmt.Errorf("cannot open git repo: %w", err)
+		return "", fmt.Errorf("cannot open git repo: %w", err)
 	}
 
 	wt, err := repo.Worktree()
 	if err != nil {
-		return fmt.Errorf("cannot get worktree: %w", err)
+		return "", fmt.Errorf("cannot get worktree: %w", err)
 	}
 
 	logger.Debug().Msg("Getting authenticated user details")
 	username, err := r.ghCli.GetUsername(ctx)
 	if err != nil {
-		return fmt.Errorf("cannot get username: %w", err)
+		return "", fmt.Errorf("cannot get username: %w", err)
 	}
 
 	email, err := r.ghCli.GetPrimaryEmail(ctx)
 	if err != nil {
-		return fmt.Errorf("cannot get primary email: %w", err)
+		return "", fmt.Errorf("cannot get primary email: %w", err)
 	}
 
 	currentHeadReference, err := repo.Head()
 	if err != nil {
-		return fmt.Errorf("cannot get current HEAD: %w", err)
+		return "", fmt.Errorf("cannot get current HEAD: %w", err)
 	}
 	currHeadName := currentHeadReference.Name()
 
@@ -276,19 +325,19 @@ func (r *Remediator) runGit(
 		Create: true,
 	})
 	if err != nil {
-		return fmt.Errorf("cannot checkout branch: %w", err)
+		return "", fmt.Errorf("cannot checkout branch: %w", err)
 	}
 
 	logger.Debug().Msg("Creating file entries")
 	changeEntries, err := modifier.modifyFs()
 	if err != nil {
-		return fmt.Errorf("cannot modifyFs: %w", err)
+		return "", fmt.Errorf("cannot modifyFs: %w", err)
 	}
 
 	logger.Debug().Msg("Staging changes")
 	for _, entry := range changeEntries {
 		if _, err := wt.Add(entry.Path); err != nil {
-			return fmt.Errorf("cannot add file %s: %w", entry.Path, err)
+			return "", fmt.Errorf("cannot add file %s: %w", entry.Path, err)
 		}
 	}
 
@@ -301,7 +350,7 @@ func (r *Remediator) runGit(
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("cannot commit: %w", err)
+		return "", fmt.Errorf("cannot commit: %w", err)
 	}
 
 	refspec := refFromBranch(branchBaseName(title))
@@ -323,7 +372,7 @@ func (r *Remediator) runGit(
 			Progress: &b,
 		})
 	if err != nil {
-		return fmt.Errorf("cannot push: %w", err)
+		return "", fmt.Errorf("cannot push: %w", err)
 	}
 	zerolog.Ctx(ctx).Debug().Msgf("Push output: %s", b.String())
 
@@ -332,26 +381,30 @@ func (r *Remediator) runGit(
 	// but the PR was not closed
 	prAlreadyExists, err := prFromBranchAlreadyExists(ctx, r.ghCli, pbRepo, branchBaseName(title))
 	if err != nil {
-		return fmt.Errorf("cannot check if PR from branch already exists: %w", err)
+		return "", fmt.Errorf("cannot check if PR from branch already exists: %w", err)
 	}
 
 	if prAlreadyExists {
 		zerolog.Ctx(ctx).Info().Msg("PR from branch already exists, won't create a new one")
-		return nil
+		return "", nil
 	}
 
-	_, err = r.ghCli.CreatePullRequest(
+	pr, err := r.ghCli.CreatePullRequest(
 		ctx, pbRepo.GetOwner(), pbRepo.GetName(),
 		title, body,
 		refspec,
 		dflBranchTo,
 	)
 	if err != nil {
-		return fmt.Errorf("cannot create pull request: %w", err)
+		return "", fmt.Errorf("cannot create pull request: %w", err)
 	}
 
+	slug := prSlug(
+		fmt.Sprintf("github:%s/%s#%d", pbRepo.GetOwner(), pbRepo.GetName(), pr.GetNumber()),
+	)
+
 	zerolog.Ctx(ctx).Info().Msg("Pull request created")
-	return nil
+	return slug, nil
 }
 
 func guessRemote(gitRepo *git.Repository) string {
@@ -454,24 +507,26 @@ func createReviewBody(prText, magicComment string) (string, error) {
 	return buf.String(), nil
 }
 
-// returns true if an open PR with the magic comment already exists
+// prWithContentAlreadyExists returns a slug identifying the PR with the magic comment
+// when it is already open or an empty string when the PR is not found.
 func prWithContentAlreadyExists(
 	ctx context.Context,
 	cli provifv1.GitHub,
 	repo *pb.Repository,
 	magicComment string,
-) (bool, error) {
+) (prSlug, error) {
 	openPrs, err := cli.ListPullRequests(ctx, repo.GetOwner(), repo.GetName(), &github.PullRequestListOptions{})
 	if err != nil {
-		return false, fmt.Errorf("cannot list pull requests: %w", err)
+		return "", fmt.Errorf("cannot list pull requests: %w", err)
 	}
 
 	for _, pr := range openPrs {
 		if strings.Contains(pr.GetBody(), magicComment) {
-			return true, nil
+			stub := fmt.Sprintf("github:%s/%s#%d", repo.GetOwner(), repo.GetName(), pr.GetNumber())
+			return prSlug(stub), nil
 		}
 	}
-	return false, nil
+	return "", nil
 }
 
 func prFromBranchAlreadyExists(

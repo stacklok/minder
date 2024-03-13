@@ -65,6 +65,8 @@ const (
 	AlertStatusTypesError        AlertStatusTypes = "error"
 	AlertStatusTypesSkipped      AlertStatusTypes = "skipped"
 	AlertStatusTypesNotAvailable AlertStatusTypes = "not_available"
+	AlertStatusTypesPending      AlertStatusTypes = "pending"
+	AlertStatusTypesUnknown      AlertStatusTypes = "unknown"
 )
 
 func (e *AlertStatusTypes) Scan(src interface{}) error {
@@ -288,6 +290,8 @@ const (
 	RemediationStatusTypesError        RemediationStatusTypes = "error"
 	RemediationStatusTypesSkipped      RemediationStatusTypes = "skipped"
 	RemediationStatusTypesNotAvailable RemediationStatusTypes = "not_available"
+	RemediationStatusTypesPending      RemediationStatusTypes = "pending"
+	RemediationStatusTypesUnknown      RemediationStatusTypes = "unknown"
 )
 
 func (e *RemediationStatusTypes) Scan(src interface{}) error {

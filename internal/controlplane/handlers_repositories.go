@@ -18,11 +18,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/stacklok/minder/internal/util/ptr"
 	"strings"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -34,7 +34,6 @@ import (
 	github "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util"
 	cursorutil "github.com/stacklok/minder/internal/util/cursor"
-	"github.com/stacklok/minder/internal/util/ptr"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -57,9 +56,19 @@ func (s *Server) RegisterRepository(
 
 	// Validate that the Repository struct in the request
 	repoReference := in.GetRepository()
-	if repoReference == nil || repoReference.Name == "" || repoReference.Owner == "" {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "missing repository owner and/or name")
+	// If the repo owner is missing, GitHub will assume a default value based
+	// on the user's credentials. An explicit check for owner is left out to
+	// avoid breaking backwards compatibility.
+	if repoReference.GetName() == "" {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "missing repository name")
 	}
+
+	l := zerolog.Ctx(ctx).With().
+		Str("repoName", repoReference.GetName()).
+		Str("repoOwner", repoReference.GetOwner()).
+		Str("projectID", projectID.String()).
+		Logger()
+	ctx = l.WithContext(ctx)
 
 	response := &pb.RegisterRepositoryResponse{
 		Result: &pb.RegisterRepoResult{
@@ -74,8 +83,8 @@ func (s *Server) RegisterRepository(
 	// validate the response body
 	newRepo, err := s.repos.CreateRepository(ctx, client, projectID, repoReference)
 	if err != nil {
-		log.Printf("error while registering repository: %v", err)
 		response.Result.Status.Error = ptr.Ptr(err.Error())
+		l.Error().Msgf("error while registering repository: %v", err)
 		return response, nil
 	}
 

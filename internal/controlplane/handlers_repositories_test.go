@@ -62,13 +62,7 @@ func TestServer_RegisterRepository(t *testing.T) {
 			Name:          "Repo creation fails when repo name is missing",
 			RepoOwner:     repoOwner,
 			RepoName:      "",
-			ExpectedError: "missing repository owner and/or name",
-		},
-		{
-			Name:          "Repo creation fails when repo owner is missing",
-			RepoOwner:     "",
-			RepoName:      repoName,
-			ExpectedError: "missing repository owner and/or name",
+			ExpectedError: "missing repository name",
 		},
 		{
 			Name:             "Repo creation fails when repo does not exist in Github",

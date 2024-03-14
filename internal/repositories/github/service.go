@@ -23,6 +23,7 @@ import (
 
 	"github.com/google/go-github/v56/github"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"github.com/stacklok/minder/internal/db"
@@ -98,6 +99,10 @@ func (r *repositoryService) CreateRepository(
 	projectID uuid.UUID,
 	repo *pb.UpstreamRepositoryRef,
 ) (*pb.Repository, error) {
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = ghprovider.Github
+	logger.BusinessRecord(ctx).Project = projectID
+
 	// get information about the repo from GitHub, and ensure it exists
 	githubRepo, err := client.GetRepository(ctx, repo.Owner, repo.Name)
 	if err != nil {
@@ -136,15 +141,12 @@ func (r *repositoryService) CreateRepository(
 		return nil, fmt.Errorf("error creating repository in database: %w", err)
 	}
 
+	logger.BusinessRecord(ctx).Repository = dbID
+
 	// publish a reconciling event for the registered repositories
-	if err = r.pushReconcilerEvent(pbRepo, projectID); err != nil {
+	if err = r.pushReconcilerEvent(ctx, pbRepo, projectID); err != nil {
 		return nil, err
 	}
-
-	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = ghprovider.Github
-	logger.BusinessRecord(ctx).Project = projectID
-	logger.BusinessRecord(ctx).Repository = dbID
 
 	return pbRepo, nil
 }
@@ -167,6 +169,9 @@ func (r *repositoryService) DeleteRepositoryByName(
 	if err != nil {
 		return err
 	}
+
+	logger.BusinessRecord(ctx).Repository = repo.ID
+
 	return r.deleteRepository(ctx, client, &repo)
 }
 
@@ -176,6 +181,10 @@ func (r *repositoryService) DeleteRepositoryByID(
 	projectID uuid.UUID,
 	repoID uuid.UUID,
 ) error {
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = ghprovider.Github
+	logger.BusinessRecord(ctx).Project = projectID
+
 	repo, err := r.store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
 		ID:        repoID,
 		ProjectID: projectID,
@@ -184,6 +193,9 @@ func (r *repositoryService) DeleteRepositoryByID(
 		log.Printf("error is %v", err)
 		return err
 	}
+
+	logger.BusinessRecord(ctx).Repository = repo.ID
+
 	return r.deleteRepository(ctx, client, &repo)
 }
 
@@ -206,16 +218,12 @@ func (r *repositoryService) deleteRepository(ctx context.Context, client ghclien
 		return fmt.Errorf("error deleting repository from DB: %w", err)
 	}
 
-	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = repo.Provider
-	logger.BusinessRecord(ctx).Project = repo.ProjectID
-	logger.BusinessRecord(ctx).Repository = repo.ID
-
 	return nil
 }
 
-func (r *repositoryService) pushReconcilerEvent(pbRepo *pb.Repository, projectID uuid.UUID) error {
-	log.Printf("publishing register event for repository: %s/%s", pbRepo.Owner, pbRepo.Name)
+func (r *repositoryService) pushReconcilerEvent(ctx context.Context, pbRepo *pb.Repository, projectID uuid.UUID) error {
+	l := zerolog.Ctx(ctx)
+	l.Debug().Msgf("publishing register event for repository: %s/%s", pbRepo.Owner, pbRepo.Name)
 
 	msg, err := reconcilers.NewRepoReconcilerMessage(ghprovider.Github, pbRepo.RepoId, projectID)
 	if err != nil {
@@ -224,7 +232,7 @@ func (r *repositoryService) pushReconcilerEvent(pbRepo *pb.Repository, projectID
 
 	// This is a non-fatal error, so we'll just log it and continue with the next ones
 	if err = r.eventProducer.Publish(reconcilers.InternalReconcilerEventTopic, msg); err != nil {
-		log.Printf("error publishing reconciler event: %v", err)
+		l.Debug().Msgf("error publishing reconciler event: %v", err)
 	}
 
 	return nil

@@ -21,6 +21,7 @@ import (
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/events/unordered"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	providertelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 )
@@ -40,6 +41,7 @@ type Reconciler struct {
 	restClientCache ratecache.RestClientCache
 	provCfg         *serverconfig.ProviderConfig
 	provMt          providertelemetry.ProviderMetrics
+	proc            *unordered.Retrier
 }
 
 // ReconcilerOption is a function that modifies a reconciler
@@ -78,6 +80,7 @@ func NewReconciler(
 		crypteng: crypteng,
 		provCfg:  provCfg,
 		provMt:   providertelemetry.NewNoopMetrics(),
+		proc:     unordered.New(evt),
 	}
 
 	for _, opt := range opts {
@@ -89,6 +92,14 @@ func NewReconciler(
 
 // Register implements the Consumer interface.
 func (r *Reconciler) Register(reg events.Registrar) {
-	reg.Register(InternalReconcilerEventTopic, r.handleRepoReconcilerEvent)
-	reg.Register(InternalProfileInitEventTopic, r.handleProfileInitEvent)
+	reporec := r.proc.Wrap(InternalReconcilerEventTopic, r.handleRepoReconcilerEvent)
+	reg.Register(InternalReconcilerEventTopic, reporec)
+
+	profrec := r.proc.Wrap(InternalProfileInitEventTopic, r.handleProfileInitEvent)
+	reg.Register(InternalProfileInitEventTopic, profrec)
+}
+
+// Wait waits for all the messages to be processed
+func (r *Reconciler) Wait() {
+	r.proc.Wait()
 }

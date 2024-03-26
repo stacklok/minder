@@ -24,6 +24,8 @@ toc_max_heading_level: 4
 | ListArtifacts | [ListArtifactsRequest](#minder-v1-ListArtifactsRequest) | [ListArtifactsResponse](#minder-v1-ListArtifactsResponse) |  |
 | GetArtifactById | [GetArtifactByIdRequest](#minder-v1-GetArtifactByIdRequest) | [GetArtifactByIdResponse](#minder-v1-GetArtifactByIdResponse) |  |
 | GetArtifactByName | [GetArtifactByNameRequest](#minder-v1-GetArtifactByNameRequest) | [GetArtifactByNameResponse](#minder-v1-GetArtifactByNameResponse) |  |
+| RegisterArtifact | [RegisterArtifactRequest](#minder-v1-RegisterArtifactRequest) | [RegisterArtifactResponse](#minder-v1-RegisterArtifactResponse) |  |
+| ListRemoteArtifactsFromProvider | [ListRemoteArtifactsFromProviderRequest](#minder-v1-ListRemoteArtifactsFromProviderRequest) | [ListRemoteArtifactsFromProviderResponse](#minder-v1-ListRemoteArtifactsFromProviderResponse) |  |
 
 
 <a name="minder-v1-EvalResultsService"></a>
@@ -163,6 +165,7 @@ manage Users CRUD
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  |  |
 | artifact_pk | [string](#string) |  |  |
 | owner | [string](#string) |  |  |
 | name | [string](#string) |  |  |
@@ -1138,6 +1141,29 @@ The default is to return all user-created profiles; the string "*" can be used t
 | cursor | [string](#string) |  | cursor is the cursor to use for the next page of results, empty if at the end |
 
 
+<a name="minder-v1-ListRemoteArtifactsFromProviderRequest"></a>
+
+#### ListRemoteArtifactsFromProviderRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  |  |
+| type | [string](#string) |  |  |
+
+
+<a name="minder-v1-ListRemoteArtifactsFromProviderResponse"></a>
+
+#### ListRemoteArtifactsFromProviderResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| results | [UpstreamArtifactRef](#minder-v1-UpstreamArtifactRef) | repeated |  |
+
+
 <a name="minder-v1-ListRemoteRepositoriesFromProviderRequest"></a>
 
 #### ListRemoteRepositoriesFromProviderRequest
@@ -1515,6 +1541,29 @@ RESTProviderConfig contains the configuration for the REST provider.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | base_url | [string](#string) |  | base_url is the base URL for the REST provider. |
+
+
+<a name="minder-v1-RegisterArtifactRequest"></a>
+
+#### RegisterArtifactRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  |  |
+| artifact | [UpstreamArtifactRef](#minder-v1-UpstreamArtifactRef) |  |  |
+
+
+<a name="minder-v1-RegisterArtifactResponse"></a>
+
+#### RegisterArtifactResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| artifact | [Artifact](#minder-v1-Artifact) |  |  |
 
 
 <a name="minder-v1-RegisterRepoResult"></a>
@@ -2043,6 +2092,18 @@ UpdateRuleTypeResponse is the response to update a rule type.
 | rule_type | [RuleType](#minder-v1-RuleType) |  | rule_type is the rule type that was updated. |
 
 
+<a name="minder-v1-UpstreamArtifactRef"></a>
+
+#### UpstreamArtifactRef
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| type | [string](#string) |  |  |
+
+
 <a name="minder-v1-UpstreamRepositoryRef"></a>
 
 #### UpstreamRepositoryRef
@@ -2169,6 +2230,9 @@ ProviderTrait is the type of the provider.
 | PROVIDER_TYPE_GIT | 3 |  |
 | PROVIDER_TYPE_OCI | 4 |  |
 | PROVIDER_TYPE_REPO_LISTER | 5 |  |
+| PROVIDER_TYPE_IMAGE_LISTER | 6 |  |
+| PROVIDER_TYPE_GHCR | 7 |  |
+| PROVIDER_TYPE_DOCKERHUB | 8 |  |
 
 
 <a name="minder-v1-Relation"></a>

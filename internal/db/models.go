@@ -240,6 +240,8 @@ type ProviderClass string
 const (
 	ProviderClassGithub    ProviderClass = "github"
 	ProviderClassGithubApp ProviderClass = "github-app"
+	ProviderClassGhcr      ProviderClass = "ghcr"
+	ProviderClassDockerhub ProviderClass = "dockerhub"
 )
 
 func (e *ProviderClass) Scan(src interface{}) error {
@@ -280,11 +282,14 @@ func (ns NullProviderClass) Value() (driver.Value, error) {
 type ProviderType string
 
 const (
-	ProviderTypeGithub     ProviderType = "github"
-	ProviderTypeRest       ProviderType = "rest"
-	ProviderTypeGit        ProviderType = "git"
-	ProviderTypeOci        ProviderType = "oci"
-	ProviderTypeRepoLister ProviderType = "repo-lister"
+	ProviderTypeGithub      ProviderType = "github"
+	ProviderTypeRest        ProviderType = "rest"
+	ProviderTypeGit         ProviderType = "git"
+	ProviderTypeOci         ProviderType = "oci"
+	ProviderTypeRepoLister  ProviderType = "repo-lister"
+	ProviderTypeImageLister ProviderType = "image-lister"
+	ProviderTypeGhcr        ProviderType = "ghcr"
+	ProviderTypeDockerhub   ProviderType = "dockerhub"
 )
 
 func (e *ProviderType) Scan(src interface{}) error {
@@ -414,13 +419,16 @@ func (ns NullSeverity) Value() (driver.Value, error) {
 }
 
 type Artifact struct {
-	ID                 uuid.UUID `json:"id"`
-	RepositoryID       uuid.UUID `json:"repository_id"`
-	ArtifactName       string    `json:"artifact_name"`
-	ArtifactType       string    `json:"artifact_type"`
-	ArtifactVisibility string    `json:"artifact_visibility"`
-	CreatedAt          time.Time `json:"created_at"`
-	UpdatedAt          time.Time `json:"updated_at"`
+	ID                 uuid.UUID     `json:"id"`
+	RepositoryID       uuid.NullUUID `json:"repository_id"`
+	ArtifactName       string        `json:"artifact_name"`
+	ArtifactType       string        `json:"artifact_type"`
+	ArtifactVisibility string        `json:"artifact_visibility"`
+	CreatedAt          time.Time     `json:"created_at"`
+	UpdatedAt          time.Time     `json:"updated_at"`
+	ProjectID          uuid.UUID     `json:"project_id"`
+	ProviderID         uuid.UUID     `json:"provider_id"`
+	ProviderName       string        `json:"provider_name"`
 }
 
 type Bundle struct {
@@ -441,9 +449,10 @@ type EntityExecutionLock struct {
 	Entity        Entities      `json:"entity"`
 	LockedBy      uuid.UUID     `json:"locked_by"`
 	LastLockTime  time.Time     `json:"last_lock_time"`
-	RepositoryID  uuid.UUID     `json:"repository_id"`
+	RepositoryID  uuid.NullUUID `json:"repository_id"`
 	ArtifactID    uuid.NullUUID `json:"artifact_id"`
 	PullRequestID uuid.NullUUID `json:"pull_request_id"`
+	ProjectID     uuid.NullUUID `json:"project_id"`
 }
 
 type EntityProfile struct {
@@ -472,10 +481,11 @@ type Feature struct {
 type FlushCache struct {
 	ID            uuid.UUID     `json:"id"`
 	Entity        Entities      `json:"entity"`
-	RepositoryID  uuid.UUID     `json:"repository_id"`
+	RepositoryID  uuid.NullUUID `json:"repository_id"`
 	ArtifactID    uuid.NullUUID `json:"artifact_id"`
 	PullRequestID uuid.NullUUID `json:"pull_request_id"`
 	QueuedAt      time.Time     `json:"queued_at"`
+	ProjectID     uuid.NullUUID `json:"project_id"`
 }
 
 type MigrationProfileBackfillLog struct {

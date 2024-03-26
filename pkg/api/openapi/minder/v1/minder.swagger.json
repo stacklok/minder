@@ -182,6 +182,76 @@
         ]
       }
     },
+    "/api/v1/artifacts/register": {
+      "post": {
+        "operationId": "ArtifactService_RegisterArtifact",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RegisterArtifactResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1RegisterArtifactRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ArtifactService"
+        ]
+      }
+    },
+    "/api/v1/artifacts/remote": {
+      "get": {
+        "operationId": "ArtifactService_ListRemoteArtifactsFromProvider",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListRemoteArtifactsFromProviderResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ArtifactService"
+        ]
+      }
+    },
     "/api/v1/artifacts/{provider}": {
       "get": {
         "operationId": "ArtifactService_ListArtifacts",
@@ -2735,6 +2805,9 @@
     "v1Artifact": {
       "type": "object",
       "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context"
+        },
         "artifactPk": {
           "type": "string"
         },
@@ -3369,6 +3442,18 @@
         }
       }
     },
+    "v1ListRemoteArtifactsFromProviderResponse": {
+      "type": "object",
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1UpstreamArtifactRef"
+          }
+        }
+      }
+    },
     "v1ListRemoteRepositoriesFromProviderResponse": {
       "type": "object",
       "properties": {
@@ -3656,10 +3741,32 @@
         "PROVIDER_TYPE_REST",
         "PROVIDER_TYPE_GIT",
         "PROVIDER_TYPE_OCI",
-        "PROVIDER_TYPE_REPO_LISTER"
+        "PROVIDER_TYPE_REPO_LISTER",
+        "PROVIDER_TYPE_IMAGE_LISTER",
+        "PROVIDER_TYPE_GHCR",
+        "PROVIDER_TYPE_DOCKERHUB"
       ],
       "default": "PROVIDER_TYPE_UNSPECIFIED",
       "description": "ProviderTrait is the type of the provider."
+    },
+    "v1RegisterArtifactRequest": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context"
+        },
+        "artifact": {
+          "$ref": "#/definitions/v1UpstreamArtifactRef"
+        }
+      }
+    },
+    "v1RegisterArtifactResponse": {
+      "type": "object",
+      "properties": {
+        "artifact": {
+          "$ref": "#/definitions/v1Artifact"
+        }
+      }
     },
     "v1RegisterRepoResult": {
       "type": "object",
@@ -4035,6 +4142,17 @@
         }
       },
       "description": "UpdateRuleTypeResponse is the response to update a rule type."
+    },
+    "v1UpstreamArtifactRef": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      }
     },
     "v1UpstreamRepositoryRef": {
       "type": "object",

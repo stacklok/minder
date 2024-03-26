@@ -142,6 +142,29 @@ service ArtifactService {
             relation: RELATION_ARTIFACT_GET
         };
     }
+
+    rpc RegisterArtifact (RegisterArtifactRequest) returns (RegisterArtifactResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/artifacts/register"
+            body: "*"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_ARTIFACT_CREATE
+        };
+    }
+
+    rpc ListRemoteArtifactsFromProvider(ListRemoteArtifactsFromProviderRequest) returns (ListRemoteArtifactsFromProviderResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/artifacts/remote"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_REMOTE_REPO_GET
+        };
+    }
 }
 
 message ListArtifactsRequest {
@@ -157,6 +180,7 @@ message ListArtifactsResponse {
 }
 
 message Artifact {
+    Context context = 9;
     string artifact_pk = 1;
     string owner = 2;
     string name = 3;
@@ -202,6 +226,29 @@ message GetArtifactByNameRequest {
 message GetArtifactByNameResponse {
     Artifact artifact = 1;
     repeated ArtifactVersion versions = 2;
+}
+
+message RegisterArtifactRequest {
+    Context context = 1;
+    UpstreamArtifactRef artifact = 2;
+}
+
+message RegisterArtifactResponse {
+    Artifact artifact = 1;
+}
+
+message UpstreamArtifactRef {
+    string name = 1;
+    string type = 2;
+}
+
+message ListRemoteArtifactsFromProviderRequest {
+    Context context = 1;
+    string type = 2;
+}
+
+message ListRemoteArtifactsFromProviderResponse {
+    repeated UpstreamArtifactRef results = 1;
 }
 
 message PullRequest {
@@ -2026,6 +2073,9 @@ enum ProviderType {
     PROVIDER_TYPE_GIT = 3 [(name) = "git"];
     PROVIDER_TYPE_OCI = 4 [(name) = "oci"];
     PROVIDER_TYPE_REPO_LISTER = 5 [(name) = "repo-lister"];
+    PROVIDER_TYPE_IMAGE_LISTER = 6 [(name) = "image-lister"];
+    PROVIDER_TYPE_GHCR = 7 [(name) = "ghcr"];
+    PROVIDER_TYPE_DOCKERHUB = 8 [(name) = "dockerhub"];
 }
 
 enum AuthorizationFlow {

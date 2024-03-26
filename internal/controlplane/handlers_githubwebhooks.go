@@ -396,16 +396,23 @@ func (s *Server) parseArtifactPublishedEvent(
 	}
 
 	dbArtifact, err := s.store.UpsertArtifact(ctx, db.UpsertArtifactParams{
-		RepositoryID:       dbrepo.ID,
+		RepositoryID: uuid.NullUUID{
+			UUID:  dbrepo.ID,
+			Valid: true,
+		},
 		ArtifactName:       tempArtifact.GetName(),
 		ArtifactType:       tempArtifact.GetTypeLower(),
 		ArtifactVisibility: tempArtifact.Visibility,
+		ProjectID:          dbrepo.ProjectID,
+		ProviderName:       dbrepo.Provider,
+		ProviderID:         dbrepo.ProviderID,
 	})
 	if err != nil {
 		return fmt.Errorf("error upserting artifact: %w", err)
 	}
 
-	pbArtifact, err := util.GetArtifact(ctx, s.store, dbrepo.ProjectID, dbrepo.ID, dbArtifact.ID)
+	pbArtifact, err := util.GetArtifact(ctx,
+		s.store, dbrepo.ProjectID, uuid.NullUUID{UUID: dbrepo.ID, Valid: true}, dbArtifact.ID)
 	if err != nil {
 		return fmt.Errorf("error getting artifact with versions: %w", err)
 	}

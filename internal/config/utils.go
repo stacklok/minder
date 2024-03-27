@@ -23,6 +23,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/spf13/pflag"
@@ -198,6 +199,8 @@ func ReadConfigFromViper[CFG any](v *viper.Viper) (*CFG, error) {
 // https://github.com/spf13/viper/issues/761, we need to call viper.SetDefault() for each
 // field in the struct to be able to use env var overrides.  This also lets us use the
 // struct as the source of default values, so yay?
+//
+//nolint:gocyclo
 func SetViperStructDefaults(v *viper.Viper, prefix string, s any) {
 	structType := reflect.TypeOf(s)
 
@@ -236,7 +239,9 @@ func SetViperStructDefaults(v *viper.Viper, prefix string, s any) {
 		switch fieldType {
 		case reflect.String:
 			defaultValue = value
-		case reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int,
+		case reflect.Int64:
+			defaultValue, err = getDefaultValueForInt64(value)
+		case reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int,
 			reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8, reflect.Uint:
 			defaultValue, err = strconv.Atoi(value)
 		case reflect.Float64:
@@ -260,4 +265,24 @@ func SetViperStructDefaults(v *viper.Viper, prefix string, s any) {
 		}
 		v.SetDefault(valueName, defaultValue)
 	}
+}
+
+func getDefaultValueForInt64(value string) (any, error) {
+	var defaultValue any
+	var err error
+
+	defaultValue, err = strconv.Atoi(value)
+	if err == nil {
+		return defaultValue, nil
+	}
+
+	// Try to parse it as a time.Duration
+	var parseErr error
+	defaultValue, parseErr = time.ParseDuration(value)
+	if parseErr == nil {
+		return defaultValue, nil
+	}
+
+	// Return the original error, not time.ParseDuration's error
+	return nil, err
 }

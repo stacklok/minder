@@ -18,6 +18,7 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -89,32 +90,26 @@ func setViperStructDefaults(v *viper.Viper, prefix string, s any) {
 		}
 		valueName := strings.ToLower(prefix + field.Tag.Get("mapstructure"))
 
-		if field.Type.Kind() == reflect.Struct {
-			setViperStructDefaults(v, valueName+".", reflect.Zero(field.Type).Interface())
-			// TODO: we could allow `default` tags on structs to override the defaults inside the type.
-			// for now, we just warn about setting the tag, because it's ignored.
-			if _, ok := field.Tag.Lookup("default"); ok {
-				panic(fmt.Sprintf("Unsupported default on struct field: %q", valueName))
-			}
-			continue
-		}
-
-		if field.Type.Kind() == reflect.Ptr {
-			setViperStructDefaults(v, valueName+".", reflect.Zero(field.Type.Elem()).Interface())
-			// TODO: we could allow `default` tags on structs to override the defaults inside the type.
-			// for now, we just warn about setting the tag, because it's ignored.
-			if _, ok := field.Tag.Lookup("default"); ok {
-				panic(fmt.Sprintf("Unsupported default on struct field: %q", valueName))
-			}
-			continue
-		}
-
-		// Extract a default value the `default` struct tag
+		// Extract a default value from the `default` struct tag
 		// we don't support all value types yet, but we can add them as needed
 		value := field.Tag.Get("default")
+		fieldType := field.Type.Kind()
+
+		if fieldType == reflect.Struct || fieldType == reflect.Ptr {
+			objType := field.Type
+			if fieldType == reflect.Ptr {
+				objType = field.Type.Elem()
+			}
+
+			setViperStructDefaults(v, valueName+".", reflect.Zero(objType).Interface())
+			if value != "" {
+				overrideViperStructDefaults(v, valueName, value)
+			}
+			continue
+		}
+
 		defaultValue := reflect.Zero(field.Type).Interface()
 		var err error // We handle errors at the end of the switch
-		fieldType := field.Type.Kind()
 		//nolint:golint,exhaustive
 		switch fieldType {
 		case reflect.String:
@@ -142,5 +137,18 @@ func setViperStructDefaults(v *viper.Viper, prefix string, s any) {
 			panic(fmt.Sprintf("Failed to bind %q to env var: %v", valueName, err))
 		}
 		v.SetDefault(valueName, defaultValue)
+	}
+}
+
+func overrideViperStructDefaults(v *viper.Viper, prefix string, newDefaults string) {
+	overrides := map[string]any{}
+	if err := json.Unmarshal([]byte(newDefaults), &overrides); err != nil {
+		panic(fmt.Sprintf("Failed to parse overrides in %q: %v", prefix, err))
+	}
+
+	for key, value := range overrides {
+		// TODO: we don't do any fancy type checking here, so this could blow up later.
+		// I expect it will blow up at config-parse time, which should be earlier enough.
+		v.SetDefault(prefix+"."+key, value)
 	}
 }

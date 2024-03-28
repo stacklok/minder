@@ -322,15 +322,17 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	}
 
 	for _, provider := range provs {
-		// keep linter happy
-		// TODO: this should not be necessary post Go 1.22 - update linter
-		p := provider
 		zerolog.Ctx(ctx).Trace().
 			Str("provider", provider.Name).
 			Str("project_id", projectID.String()).
 			Msg("listing repositories")
 
-		repoLister, err := s.instantiator.GetRepoLister(ctx, &p)
+		// Until such a time that gosec decides to assume that everyone is on
+		// Go 1.22 at minimum, we need to exclude cases where we grab a pointer
+		// to the loop variable
+		// See: https://github.com/securego/gosec/issues/1099
+		// nolint:gosec
+		repoLister, err := s.instantiator.GetRepoLister(ctx, &provider)
 		if err != nil {
 			if errors.Is(err, providers.ErrInvalidCredential) {
 				return nil, util.UserVisibleError(codes.PermissionDenied,

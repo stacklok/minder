@@ -161,13 +161,13 @@ func (s *Server) CreateRuleType(
 
 	projectID := entityCtx.Project.ID
 	// TODO: This will be removed once we decouple providers from rule types
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, crt, projectID)
+	provider, err := s.providerStore.GetByName(ctx, projectID, crt.GetContext().GetProvider())
 	if err != nil {
 		return nil, providerError(err)
 	}
 
 	newRuleType, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.RuleType, error) {
-		return s.ruleTypes.CreateRuleType(ctx, projectID, &provider, uuid.Nil, crt.GetRuleType(), qtx)
+		return s.ruleTypes.CreateRuleType(ctx, projectID, provider, uuid.Nil, crt.GetRuleType(), qtx)
 	})
 	if err != nil {
 		if errors.Is(err, ruletypes.ErrRuleTypeInvalid) {
@@ -196,13 +196,13 @@ func (s *Server) UpdateRuleType(
 
 	projectID := entityCtx.Project.ID
 	// TODO: This will be removed once we decouple providers from rule types
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, urt, projectID)
+	provider, err := s.providerStore.GetByName(ctx, projectID, urt.GetContext().GetProvider())
 	if err != nil {
 		return nil, providerError(err)
 	}
 
 	updatedRuleType, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.RuleType, error) {
-		return s.ruleTypes.UpdateRuleType(ctx, projectID, &provider, uuid.Nil, urt.GetRuleType(), qtx)
+		return s.ruleTypes.UpdateRuleType(ctx, projectID, provider, uuid.Nil, urt.GetRuleType(), qtx)
 	})
 	if err != nil {
 		if errors.Is(err, ruletypes.ErrRuleTypeInvalid) {

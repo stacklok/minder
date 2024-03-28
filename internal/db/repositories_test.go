@@ -168,7 +168,6 @@ func TestListRepositoriesByProjectID(t *testing.T) {
 	}
 
 	arg := ListRepositoriesByProjectIDParams{
-		Provider:  prov.Name,
 		ProjectID: project.ID,
 	}
 

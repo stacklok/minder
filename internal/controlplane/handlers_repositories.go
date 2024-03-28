@@ -98,18 +98,13 @@ func (s *Server) ListRepositories(ctx context.Context,
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
-	if err != nil {
-		return nil, providerError(err)
-	}
-
 	reqRepoCursor, err := cursorutil.NewRepoCursor(in.GetCursor())
 	if err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
 
 	repoId := sql.NullInt64{}
-	if reqRepoCursor.ProjectId == projectID.String() && reqRepoCursor.Provider == provider.Name {
+	if reqRepoCursor.ProjectId == projectID.String() {
 		repoId = sql.NullInt64{Valid: true, Int64: reqRepoCursor.RepoId}
 	}
 
@@ -123,7 +118,6 @@ func (s *Server) ListRepositories(ctx context.Context,
 	}
 
 	repos, err := s.store.ListRepositoriesByProjectID(ctx, db.ListRepositoriesByProjectIDParams{
-		Provider:  provider.Name,
 		ProjectID: projectID,
 		RepoID:    repoId,
 		Limit:     limit,
@@ -152,8 +146,8 @@ func (s *Server) ListRepositories(ctx context.Context,
 	if limit.Valid && int64(len(repos)) == limit.Int64 {
 		lastRepo := repos[len(repos)-1]
 		respRepoCursor = &cursorutil.RepoCursor{
-			ProjectId: projectID.String(),
-			Provider:  provider.Name,
+			ProjectId: lastRepo.ProjectID.String(),
+			Provider:  lastRepo.Provider,
 			RepoId:    lastRepo.RepoID,
 		}
 
@@ -165,7 +159,6 @@ func (s *Server) ListRepositories(ctx context.Context,
 	resp.Cursor = respRepoCursor.String()
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = provider.Name
 	logger.BusinessRecord(ctx).Project = projectID
 
 	return &resp, nil

@@ -62,7 +62,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.24.0
 	go.uber.org/mock v0.4.0
 	golang.org/x/crypto v0.21.0
-	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
+	golang.org/x/exp v0.0.0-20240325151524-a685a6edb6d8
 	golang.org/x/oauth2 v0.18.0
 	golang.org/x/sync v0.6.0
 	golang.org/x/term v0.18.0
@@ -134,18 +134,20 @@ require (
 	github.com/muhlemmer/gu v0.3.1 // indirect
 	github.com/natefinch/wrap v0.2.0 // indirect
 	github.com/oklog/ulid/v2 v2.1.0 // indirect
+	github.com/onsi/gomega v1.31.1 // indirect
 	github.com/openfga/api/proto v0.0.0-20240318145204-66b9e5cb403c // indirect
 	github.com/openfga/language/pkg/go v0.0.0-20240312214103-2c2688b46b9c // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/pressly/goose/v3 v3.19.2 // indirect
 	github.com/puzpuzpuz/xsync v1.5.2 // indirect
+	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/rs/cors v1.10.1 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.8.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/sethvargo/go-retry v0.2.4 // indirect
-	github.com/shirou/gopsutil/v3 v3.23.12 // indirect
+	github.com/shirou/gopsutil/v3 v3.24.2 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/signalfx/splunk-otel-go/instrumentation/internal v1.14.0 // indirect
 	github.com/sigstore/sigstore v1.8.1 // indirect
@@ -158,7 +160,7 @@ require (
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
-	github.com/yusufpapurcu/wmi v1.2.3 // indirect
+	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.24.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.24.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.1.0 // indirect
@@ -250,13 +252,13 @@ require (
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
-	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
+	github.com/pelletier/go-toml/v2 v2.2.0 // indirect
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_model v0.6.0 // indirect
-	github.com/prometheus/common v0.48.0 // indirect
-	github.com/prometheus/procfs v0.12.0 // indirect
+	github.com/prometheus/common v0.51.1 // indirect
+	github.com/prometheus/procfs v0.13.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
@@ -291,7 +293,7 @@ require (
 	golang.org/x/net v0.22.0 // indirect
 	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	golang.org/x/tools v0.18.0 // indirect
+	golang.org/x/tools v0.19.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto v0.0.0-20240205150955-31a09d347014 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240304212257-790db918fca8 // indirect

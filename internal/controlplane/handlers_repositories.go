@@ -322,21 +322,24 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	}
 
 	for _, provider := range provs {
+		// keep linter happy
+		// TODO: this should not be necessary post Go 1.22 - update linter
+		p := provider
 		zerolog.Ctx(ctx).Trace().
 			Str("provider", provider.Name).
 			Str("project_id", projectID.String()).
 			Msg("listing repositories")
 
-		pbOpts := []providers.ProviderBuilderOption{
-			providers.WithProviderMetrics(s.provMt),
-			providers.WithRestClientCache(s.restClientCache),
-		}
-		p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
+		repoLister, err := s.instantiator.GetRepoLister(ctx, &p)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
+			if errors.Is(err, providers.ErrInvalidCredential) {
+				return nil, util.UserVisibleError(codes.PermissionDenied,
+					"cannot get credential for provider: did you run `minder provider enroll`?")
+			}
+			return nil, status.Errorf(codes.Internal, "cannot create github client: %v", err)
 		}
 
-		results, err := s.listRemoteRepositoriesForProvider(ctx, provider.Name, p, projectID)
+		results, err := s.listRemoteRepositoriesForProvider(ctx, provider.Name, repoLister, projectID)
 		if err != nil {
 			return nil, err
 		}
@@ -350,19 +353,9 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 func (s *Server) listRemoteRepositoriesForProvider(
 	ctx context.Context,
 	provName string,
-	p *providers.ProviderBuilder,
+	client v1.RepoLister,
 	projectID uuid.UUID,
 ) ([]*pb.UpstreamRepositoryRef, error) {
-	// by now we've already checked that repo listed is implemented
-	client, err := p.GetRepoLister()
-	if err != nil {
-		if errors.Is(err, providers.ErrInvalidCredential) {
-			return nil, util.UserVisibleError(codes.PermissionDenied,
-				"cannot get credential for provider: did you run `minder provider enroll`?")
-		}
-		return nil, status.Errorf(codes.Internal, "cannot create github client: %v", err)
-	}
-
 	tmoutCtx, cancel := context.WithTimeout(ctx, github.ExpensiveRestCallTimeout)
 	defer cancel()
 
@@ -414,17 +407,7 @@ func (s *Server) getProviderAndClient(
 		return nil, nil, providerError(err)
 	}
 
-	pbOpts := []providers.ProviderBuilderOption{
-		providers.WithProviderMetrics(s.provMt),
-		providers.WithRestClientCache(s.restClientCache),
-	}
-
-	p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
-	if err != nil {
-		return nil, nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
-	}
-
-	client, err := p.GetGitHub()
+	client, err := s.instantiator.GetGitHub(ctx, &provider, nil)
 	if err != nil {
 		return nil, nil, status.Errorf(codes.Internal, "error creating github provider: %v", err)
 	}

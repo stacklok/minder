@@ -31,12 +31,12 @@ import (
 
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/engine/actions"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/rego"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/engine/ruleengine"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/providers/credentials"
@@ -159,7 +159,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	off := "off"
 	profile.Alert = &off
 
-	rules, err := engine.GetRulesFromProfileOfType(profile, ruletype)
+	ruleInstances, err := ruleengine.GetRulesFromProfileOfType(profile, ruletype)
 	if err != nil {
 		return fmt.Errorf("error getting relevant fragment: %w", err)
 	}
@@ -172,7 +172,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 
 	// TODO: use cobra context here
 	ctx := context.Background()
-	eng, err := engine.NewRuleTypeEngine(ctx, ruletype, prov)
+	eng, err := ruleengine.NewRuleTypeEngine(ctx, ruletype, prov)
 	if err != nil {
 		return fmt.Errorf("cannot create rule type engine: %w", err)
 	}
@@ -189,16 +189,16 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error creating rule type engine: %w", err)
 	}
 
-	if len(rules) == 0 {
+	if len(ruleInstances) == 0 {
 		return fmt.Errorf("no rules found with type %s", ruletype.Name)
 	}
 
-	return runEvaluationForRules(cmd, eng, inf, remediateStatus, remMetadata, rules, actionEngine)
+	return runEvaluationForRules(cmd, eng, inf, remediateStatus, remMetadata, ruleInstances, actionEngine)
 }
 
 func runEvaluationForRules(
 	cmd *cobra.Command,
-	eng *engine.RuleTypeEngine,
+	eng *ruleengine.RuleTypeEngine,
 	inf *entities.EntityInfoWrapper,
 	remediateStatus db.NullRemediationStatusTypes,
 	remMetadata pqtype.NullRawMessage,

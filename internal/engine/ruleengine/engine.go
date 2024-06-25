@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package engine
+// Package ruleengine contains the RuleTypeEngine type.
+package ruleengine
 
 import (
 	"context"
@@ -129,6 +130,11 @@ func (r *RuleTypeEngine) GetID() string {
 // By instance we mean a rule that has been instantiated in a profile from a given rule type.
 func (r *RuleTypeEngine) GetRuleInstanceValidator() *profiles.RuleValidator {
 	return r.ruleValidator
+}
+
+// GetRuleType returns the rule type PB structure.
+func (r *RuleTypeEngine) GetRuleType() *minderv1.RuleType {
+	return r.ruletype
 }
 
 // Eval runs the rule type engine against the given entity

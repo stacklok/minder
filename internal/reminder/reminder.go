@@ -28,6 +28,9 @@ import (
 
 	reminderconfig "github.com/stacklok/minder/internal/config/reminder"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/events/common"
+	remindermessages "github.com/stacklok/minder/internal/reminder/messages"
 )
 
 // Interface is an interface over the reminder service
@@ -51,7 +54,7 @@ type reminder struct {
 	ticker *time.Ticker
 
 	eventPublisher message.Publisher
-	eventDBCloser  driverCloser
+	eventDBCloser  common.DriverCloser
 }
 
 // NewReminder creates a new reminder instance
@@ -144,19 +147,64 @@ func (r *reminder) sendReminders(ctx context.Context) []error {
 
 	logger.Info().Msgf("created repository batch of size: %d", len(repos))
 
-	// Update the reminder_last_sent for each repository to export as metrics
-	for _, repo := range repos {
-		logger.Debug().Str("repo", repo.ID.String()).
-			Time("previously", repo.ReminderLastSent.Time).Msg("updating reminder_last_sent")
-		err := r.store.UpdateReminderLastSentById(ctx, repo.ID)
-		if err != nil {
-			logger.Error().Err(err).Str("repo", repo.ID.String()).Msg("unable to update reminder_last_sent")
-			return []error{err}
-		}
-		// TODO: Send the actual reminders
+	messages := make([]*message.Message, 0, len(repos))
+	errorSlice := make([]error, 0)
+
+	tx, err := r.store.BeginTransaction()
+	if err != nil {
+		return []error{err}
 	}
 
-	return nil
+	defer tx.Rollback()
+
+	qtx := r.store.GetQuerierWithTransaction(tx)
+
+	// TODO: Collect Metrics
+	// Potential metrics:
+	// - Gauge: Number of reminders in the current batch
+	// - UpDownCounter: Average reminders sent per batch
+	// - Histogram: reminder_last_sent time distribution
+	for _, repo := range repos {
+		repoReconcilerMessage, err := remindermessages.NewRepoReminderMessage(
+			repo.ProviderID, repo.RepoID, repo.ProjectID,
+		)
+		if err != nil {
+			errorSlice = append(errorSlice, err)
+			continue
+		}
+
+		logger.Debug().
+			Str("repo", repo.ID.String()).
+			Time("previously", repo.ReminderLastSent.Time).
+			Msg("updating reminder_last_sent")
+
+		err = qtx.UpdateReminderLastSentById(ctx, repo.ID)
+		if err != nil {
+			logger.Error().Err(err).Str("repo", repo.ID.String()).Msg("unable to update reminder_last_sent")
+			errorSlice = append(errorSlice, err)
+			continue
+		}
+
+		messages = append(messages, repoReconcilerMessage)
+	}
+
+	if len(messages) != 0 {
+		err = r.eventPublisher.Publish(events.TopicQueueRepoReminder, messages...)
+		if err != nil {
+			errorSlice = append(errorSlice, fmt.Errorf("error publishing messages: %w", err))
+		} else {
+			logger.Info().Msgf("sent %d reminders", len(messages))
+
+			// Commit the transaction i.e update reminder_last_sent
+			// only if the messages were sent successfully
+			if err = tx.Commit(); err != nil {
+				logger.Error().Err(err).Msg("unable to commit transaction")
+				errorSlice = append(errorSlice, err)
+			}
+		}
+	}
+
+	return errorSlice
 }
 
 func (r *reminder) getRepositoryBatch(ctx context.Context) ([]db.Repository, error) {

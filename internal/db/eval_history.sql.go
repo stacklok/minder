@@ -241,26 +241,28 @@ SELECT s.id::uuid AS evaluation_id,
    AND ($4::text[] IS NULL OR ere.pull_request_id IS NULL OR pr.pr_number::text = ANY($4::text[]))
    AND ($4::text[] IS NULL OR ere.artifact_id IS NULL OR a.artifact_name = ANY($4::text[]))
    AND ($5::text[] IS NULL OR p.name = ANY($5::text[]))
-   AND ($6::remediation_status_types[] IS NULL OR re.status = ANY($6::remediation_status_types[]))
-   AND ($7::alert_status_types[] IS NULL OR ae.status = ANY($7::alert_status_types[]))
-   AND ($8::eval_status_types[] IS NULL OR s.status = ANY($8::eval_status_types[]))
+   AND ($6::text[] IS NULL OR rt.name = ANY($6::text[]))
+   AND ($7::remediation_status_types[] IS NULL OR re.status = ANY($7::remediation_status_types[]))
+   AND ($8::alert_status_types[] IS NULL OR ae.status = ANY($8::alert_status_types[]))
+   AND ($9::eval_status_types[] IS NULL OR s.status = ANY($9::eval_status_types[]))
    -- exclusion filters
-   AND ($9::entities[] IS NULL OR entity_type::entities != ANY($9::entities[]))
-   AND ($10::text[] IS NULL OR ere.repository_id IS NULL OR r.repo_name != ANY($10::text[]))
-   AND ($10::text[] IS NULL OR ere.pull_request_id IS NULL OR pr.pr_number::text != ANY($10::text[]))
-   AND ($10::text[] IS NULL OR ere.artifact_id IS NULL OR a.artifact_name != ANY($10::text[]))
-   AND ($11::text[] IS NULL OR p.name != ANY($11::text[]))
-   AND ($12::remediation_status_types[] IS NULL OR re.status != ANY($12::remediation_status_types[]))
-   AND ($13::alert_status_types[] IS NULL OR ae.status != ANY($13::alert_status_types[]))
-   AND ($14::eval_status_types[] IS NULL OR s.status != ANY($14::eval_status_types[]))
+   AND ($10::entities[] IS NULL OR entity_type::entities != ANY($10::entities[]))
+   AND ($11::text[] IS NULL OR ere.repository_id IS NULL OR r.repo_name != ANY($11::text[]))
+   AND ($11::text[] IS NULL OR ere.pull_request_id IS NULL OR pr.pr_number::text != ANY($11::text[]))
+   AND ($11::text[] IS NULL OR ere.artifact_id IS NULL OR a.artifact_name != ANY($11::text[]))
+   AND ($12::text[] IS NULL OR p.name != ANY($12::text[]))
+   AND ($13::text[] IS NULL OR rt.name != ANY($13::text[]))
+   AND ($14::remediation_status_types[] IS NULL OR re.status != ANY($14::remediation_status_types[]))
+   AND ($15::alert_status_types[] IS NULL OR ae.status != ANY($15::alert_status_types[]))
+   AND ($16::eval_status_types[] IS NULL OR s.status != ANY($16::eval_status_types[]))
    -- time range filter
-   AND ($15::timestamp without time zone IS NULL
-        OR $16::timestamp without time zone IS NULL
-        OR s.most_recent_evaluation BETWEEN $15 AND $16)
+   AND ($17::timestamp without time zone IS NULL
+        OR $18::timestamp without time zone IS NULL
+        OR s.most_recent_evaluation BETWEEN $17 AND $18)
    -- implicit filter by project id
-   AND j.id = $17
+   AND j.id = $19
  ORDER BY s.most_recent_evaluation DESC
- LIMIT $18::integer
+ LIMIT $20::integer
 `
 
 type ListEvaluationHistoryParams struct {
@@ -269,12 +271,14 @@ type ListEvaluationHistoryParams struct {
 	Entitytypes     []Entities               `json:"entitytypes"`
 	Entitynames     []string                 `json:"entitynames"`
 	Profilenames    []string                 `json:"profilenames"`
+	Ruletypes       []string                 `json:"ruletypes"`
 	Remediations    []RemediationStatusTypes `json:"remediations"`
 	Alerts          []AlertStatusTypes       `json:"alerts"`
 	Statuses        []EvalStatusTypes        `json:"statuses"`
 	Notentitytypes  []Entities               `json:"notentitytypes"`
 	Notentitynames  []string                 `json:"notentitynames"`
 	Notprofilenames []string                 `json:"notprofilenames"`
+	Notruletypes    []string                 `json:"notruletypes"`
 	Notremediations []RemediationStatusTypes `json:"notremediations"`
 	Notalerts       []AlertStatusTypes       `json:"notalerts"`
 	Notstatuses     []EvalStatusTypes        `json:"notstatuses"`
@@ -312,12 +316,14 @@ func (q *Queries) ListEvaluationHistory(ctx context.Context, arg ListEvaluationH
 		pq.Array(arg.Entitytypes),
 		pq.Array(arg.Entitynames),
 		pq.Array(arg.Profilenames),
+		pq.Array(arg.Ruletypes),
 		pq.Array(arg.Remediations),
 		pq.Array(arg.Alerts),
 		pq.Array(arg.Statuses),
 		pq.Array(arg.Notentitytypes),
 		pq.Array(arg.Notentitynames),
 		pq.Array(arg.Notprofilenames),
+		pq.Array(arg.Notruletypes),
 		pq.Array(arg.Notremediations),
 		pq.Array(arg.Notalerts),
 		pq.Array(arg.Notstatuses),

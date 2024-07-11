@@ -407,6 +407,38 @@ func TestListEvaluationHistory(t *testing.T) {
 			},
 		},
 
+		// filter rule types
+		{
+			name: "included rule types",
+			dbSetup: dbf.NewDBMock(
+				withListEvaluationHistory(
+					&db.ListEvaluationHistoryParams{
+						Size:      0,
+						Ruletypes: []string{"foo"},
+					},
+					nil,
+				),
+			),
+			filter: &listEvaluationFilter{
+				includedRuleTypes: []string{"foo"},
+			},
+		},
+		{
+			name: "excluded rule types",
+			dbSetup: dbf.NewDBMock(
+				withListEvaluationHistory(
+					&db.ListEvaluationHistoryParams{
+						Size:         0,
+						Notruletypes: []string{"foo"},
+					},
+					nil,
+				),
+			),
+			filter: &listEvaluationFilter{
+				excludedRuleTypes: []string{"foo"},
+			},
+		},
+
 		// filter remediations
 		{
 			name: "included remediations",

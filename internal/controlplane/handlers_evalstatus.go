@@ -68,6 +68,7 @@ func (s *Server) ListEvaluationHistory(
 	opts = append(opts, FilterOptsFromStrings(in.GetEntityType(), history.WithEntityType)...)
 	opts = append(opts, FilterOptsFromStrings(in.GetEntityName(), history.WithEntityName)...)
 	opts = append(opts, FilterOptsFromStrings(in.GetProfileName(), history.WithProfileName)...)
+	opts = append(opts, FilterOptsFromStrings(in.GetRuleType(), history.WithRuleType)...)
 	opts = append(opts, FilterOptsFromStrings(in.GetStatus(), history.WithStatus)...)
 	opts = append(opts, FilterOptsFromStrings(in.GetRemediation(), history.WithRemediation)...)
 	opts = append(opts, FilterOptsFromStrings(in.GetAlert(), history.WithAlert)...)

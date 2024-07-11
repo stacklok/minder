@@ -2489,19 +2489,21 @@ message ListEvaluationHistoryRequest {
     repeated string entity_name = 3;
     // List of profile names to retrieve.
     repeated string profile_name = 4;
-    // List of evaluation statuses to retrieve.
-    repeated string status = 5;
+    // List of rule types to retrieve.
+    repeated string rule_type = 5;
+    // List of profile names to retrieve.
+    repeated string status = 6;
     // List of remediation statuses to retrieve.
-    repeated string remediation = 6;
+    repeated string remediation = 7;
     // List of alert statuses to retrieve.
-    repeated string alert = 7;
+    repeated string alert = 8;
     // Timestamp representing the start time of the selection window.
-    google.protobuf.Timestamp from = 8;
+    google.protobuf.Timestamp from = 9;
     // Timestamp representing the end time of the selection window.
-    google.protobuf.Timestamp to = 9;
+    google.protobuf.Timestamp to = 10;
 
     // Cursor object to select the "page" of data to retrieve.
-    Cursor cursor = 10;
+    Cursor cursor = 11;
 }
 
 // ListEvaluationHistoryResponse represents a response message for the

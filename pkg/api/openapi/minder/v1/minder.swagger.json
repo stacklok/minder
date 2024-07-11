@@ -601,8 +601,19 @@
             "collectionFormat": "multi"
           },
           {
+            "name": "ruleType",
+            "description": "List of rule types to retrieve.",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
             "name": "status",
-            "description": "List of evaluation statuses to retrieve.",
+            "description": "List of profile names to retrieve.",
             "in": "query",
             "required": false,
             "type": "array",

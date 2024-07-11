@@ -291,6 +291,9 @@ func toSQLFilter(
 	if err := paramsFromProfileNameFilter(filter, params); err != nil {
 		return err
 	}
+	if err := paramsFromRuleTypeFilter(filter, params); err != nil {
+		return err
+	}
 	if err := paramsFromRemediationFilter(filter, params); err != nil {
 		return err
 	}
@@ -360,6 +363,19 @@ func paramsFromProfileNameFilter(
 	}
 	if len(filter.ExcludedProfileNames()) != 0 {
 		params.Notprofilenames = filter.ExcludedProfileNames()
+	}
+	return nil
+}
+
+func paramsFromRuleTypeFilter(
+	filter RuleTypeFilter,
+	params *db.ListEvaluationHistoryParams,
+) error {
+	if len(filter.IncludedRuleTypes()) != 0 {
+		params.Ruletypes = filter.IncludedRuleTypes()
+	}
+	if len(filter.ExcludedRuleTypes()) != 0 {
+		params.Notruletypes = filter.ExcludedRuleTypes()
 	}
 	return nil
 }

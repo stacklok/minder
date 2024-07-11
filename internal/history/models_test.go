@@ -288,6 +288,17 @@ func TestListEvaluationFilter(t *testing.T) {
 			err: true,
 		},
 		{
+			name: "inclusion exclusion rule name",
+			filter: func(t *testing.T) (ListEvaluationFilter, error) {
+				t.Helper()
+				return NewListEvaluationFilter(
+					WithRuleType("foo"),
+					WithRuleType("!bar"),
+				)
+			},
+			err: true,
+		},
+		{
 			name: "inclusion exclusion evaluation status",
 			filter: func(t *testing.T) (ListEvaluationFilter, error) {
 				t.Helper()
@@ -652,6 +663,80 @@ func TestFilterOptions(t *testing.T) {
 			option: func(t *testing.T) FilterOpt {
 				t.Helper()
 				return WithProfileName("repository")
+			},
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return foo
+			},
+			err: true,
+		},
+
+		// rule type
+		{
+			name: "rule type in filter",
+			option: func(t *testing.T) FilterOpt {
+				t.Helper()
+				return WithRuleType("repository")
+			},
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			check: func(t *testing.T, filter Filter) {
+				t.Helper()
+				f := filter.(RuleTypeFilter)
+				require.NotNil(t, f.IncludedRuleTypes())
+				require.Equal(t, []string{"repository"}, f.IncludedRuleTypes())
+				require.Nil(t, f.ExcludedRuleTypes())
+			},
+		},
+		{
+			name: "rule type not in filter",
+			option: func(t *testing.T) FilterOpt {
+				t.Helper()
+				return WithRuleType("!repository")
+			},
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			check: func(t *testing.T, filter Filter) {
+				t.Helper()
+				f := filter.(RuleTypeFilter)
+				require.Nil(t, f.IncludedRuleTypes())
+				require.NotNil(t, f.ExcludedRuleTypes())
+				require.Equal(t, []string{"repository"}, f.ExcludedRuleTypes())
+			},
+		},
+		{
+			name: "empty rule type",
+			option: func(t *testing.T) FilterOpt {
+				t.Helper()
+				return WithRuleType("")
+			},
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			err: true,
+		},
+		{
+			name: "bogus rule type",
+			option: func(t *testing.T) FilterOpt {
+				t.Helper()
+				return WithRuleType("!")
+			},
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			err: true,
+		},
+		{
+			name: "wrong rule type filter",
+			option: func(t *testing.T) FilterOpt {
+				t.Helper()
+				return WithRuleType("repository")
 			},
 			filter: func(t *testing.T) Filter {
 				t.Helper()

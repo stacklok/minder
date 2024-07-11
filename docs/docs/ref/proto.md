@@ -1339,7 +1339,8 @@ which is used for pagination.
 | entity_type | <TypeLink type="string">string</TypeLink> | repeated | List of entity types to retrieve. |
 | entity_name | <TypeLink type="string">string</TypeLink> | repeated | List of entity names to retrieve. |
 | profile_name | <TypeLink type="string">string</TypeLink> | repeated | List of profile names to retrieve. |
-| status | <TypeLink type="string">string</TypeLink> | repeated | List of evaluation statuses to retrieve. |
+| rule_type | <TypeLink type="string">string</TypeLink> | repeated | List of rule types to retrieve. |
+| status | <TypeLink type="string">string</TypeLink> | repeated | List of profile names to retrieve. |
 | remediation | <TypeLink type="string">string</TypeLink> | repeated | List of remediation statuses to retrieve. |
 | alert | <TypeLink type="string">string</TypeLink> | repeated | List of alert statuses to retrieve. |
 | from | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  | Timestamp representing the start time of the selection window. |

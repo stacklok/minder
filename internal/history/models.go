@@ -179,6 +179,18 @@ type ProfileNameFilter interface {
 	ExcludedProfileNames() []string
 }
 
+// RuleTypeFilter interface should be implemented by types
+// implementing a filter on rule types.
+type RuleTypeFilter interface {
+	// AddRuleType adds a rule type for inclusion/exclusion in the
+	// filter.
+	AddRuleType(string) error
+	// IncludedRuleTypes returns the list of included rule types.
+	IncludedRuleTypes() []string
+	// ExcludedRuleTypes returns the list of excluded rule types.
+	ExcludedRuleTypes() []string
+}
+
 // StatusFilter interface should be implemented by types implementing
 // a filter on statuses.
 type StatusFilter interface {
@@ -237,6 +249,7 @@ type ListEvaluationFilter interface {
 	EntityTypeFilter
 	EntityNameFilter
 	ProfileNameFilter
+	RuleTypeFilter
 	StatusFilter
 	RemediationFilter
 	AlertFilter
@@ -258,6 +271,10 @@ type listEvaluationFilter struct {
 	includedProfileNames []string
 	// List of profile names to exclude from the selection
 	excludedProfileNames []string
+	// List of rule names to include in the selection
+	includedRuleTypes []string
+	// List of rule names to exclude from the selection
+	excludedRuleTypes []string
 	// List of statuses to include in the selection
 	includedStatuses []string
 	// List of statuses to exclude from the selection
@@ -354,6 +371,29 @@ func (filter *listEvaluationFilter) IncludedProfileNames() []string {
 }
 func (filter *listEvaluationFilter) ExcludedProfileNames() []string {
 	return filter.excludedProfileNames
+}
+
+func (filter *listEvaluationFilter) AddRuleType(ruleType string) error {
+	if strings.HasPrefix(ruleType, "!") {
+		ruleType = strings.Split(ruleType, "!")[1] // guaranteed to exist
+		filter.excludedRuleTypes = append(filter.excludedRuleTypes, ruleType)
+	} else {
+		filter.includedRuleTypes = append(filter.includedRuleTypes, ruleType)
+	}
+
+	// Prevent filtering for both inclusion and exclusion
+	if len(filter.includedRuleTypes) > 0 &&
+		len(filter.excludedRuleTypes) > 0 {
+		return fmt.Errorf("%w: rule type", ErrInclusionExclusion)
+	}
+
+	return nil
+}
+func (filter *listEvaluationFilter) IncludedRuleTypes() []string {
+	return filter.includedRuleTypes
+}
+func (filter *listEvaluationFilter) ExcludedRuleTypes() []string {
+	return filter.excludedRuleTypes
 }
 
 func (filter *listEvaluationFilter) AddStatus(status string) error {
@@ -517,6 +557,22 @@ func WithProfileName(profileName string) FilterOpt {
 			return fmt.Errorf("%w: wrong filter type", ErrInvalidIdentifier)
 		}
 		return inner.AddProfileName(profileName)
+	}
+}
+
+// WithRuleType adds an rule type string to the filter. The rule type
+// is added for inclusion unless it starts with a `!` characters, in
+// which case it is added for exclusion.
+func WithRuleType(ruleType string) FilterOpt {
+	return func(filter Filter) error {
+		if ruleType == "" || ruleType == "!" {
+			return fmt.Errorf("%w: rule type", ErrInvalidIdentifier)
+		}
+		inner, ok := filter.(RuleTypeFilter)
+		if !ok {
+			return fmt.Errorf("%w: wrong filter type", ErrInvalidIdentifier)
+		}
+		return inner.AddRuleType(ruleType)
 	}
 }
 

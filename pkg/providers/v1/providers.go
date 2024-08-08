@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"time"
 
+	"golang.org/x/oauth2"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/go-containerregistry/pkg/authn"
@@ -143,6 +144,12 @@ type GitHub interface {
 	AddAuthToPushOptions(ctx context.Context, options *git.PushOptions) error
 	StartCheckRun(context.Context, string, string, *github.CreateCheckRunOptions) (*github.CheckRun, error)
 	UpdateCheckRun(context.Context, string, string, int64, *github.UpdateCheckRunOptions) (*github.CheckRun, error)
+}
+
+// GithubSimple is the interface for interacting with the GitHub REST API directly before creating providers.
+type GithubLite interface {
+	IsMemberInOrganization(ctx context.Context, token *oauth2.Token, org , user string) (bool, error)
+	GetLoginByToken(ctx context.Context, token *oauth2.Token) (string, error)
 }
 
 // ImageLister is the interface for listing images

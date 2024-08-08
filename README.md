@@ -206,6 +206,12 @@ See the documentation on how to do that - [Docs](https://minder-docs.stacklok.de
 
 #### Run `minder-server`
 
+For local development, create the token_key_passphrase in .ssh folder. For production, these tokens can be served from a secure vault.
+
+```bash
+openssl rand -base64 32 > .ssh/token_key_passphrase
+```
+
 Start `minder-server` along with its dependant services (`keycloak` and `postgres`) by running:
 
 ```bash

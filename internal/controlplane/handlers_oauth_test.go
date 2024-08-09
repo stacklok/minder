@@ -471,7 +471,8 @@ func TestProviderCallback(t *testing.T) {
 		projectIDBySessionNumCalls int
 		err                        string
 		config                     []byte
-	}{{
+		validOwner				   bool
+	}{ {
 		name:                       "Success",
 		redirectUrl:                "http://localhost:8080",
 		projectIDBySessionNumCalls: 2,
@@ -479,6 +480,7 @@ func TestProviderCallback(t *testing.T) {
 			withProviderSearch(store)
 		},
 		code: 307,
+		validOwner: true,
 	}, {
 		name:                       "Success with remote user",
 		redirectUrl:                "http://localhost:8080",
@@ -488,6 +490,7 @@ func TestProviderCallback(t *testing.T) {
 			withProviderSearch(store)
 		},
 		code: 307,
+		validOwner: true,
 	}, {
 		name:                       "Wrong remote userid",
 		remoteUser:                 sql.NullString{Valid: true, String: "1234"},
@@ -497,6 +500,7 @@ func TestProviderCallback(t *testing.T) {
 		},
 		code: 403,
 		err:  "The provided login token was associated with a different user.\n",
+		validOwner: true,
 	}, {
 		name:        "No existing provider",
 		redirectUrl: "http://localhost:8080",
@@ -508,6 +512,7 @@ func TestProviderCallback(t *testing.T) {
 		storeMockSetup: func(store *mockdb.MockStore) {
 			withProviderCreate(store)
 		},
+		validOwner: true,
 	}, {
 		name:                       "Config does not validate",
 		redirectUrl:                "http://localhost:8080",
@@ -518,6 +523,16 @@ func TestProviderCallback(t *testing.T) {
 		},
 		config: []byte(`{`),
 		code:   http.StatusBadRequest,
+		validOwner: true,
+	}, {
+		name:                       "Success with invalid ownerfilter",
+		redirectUrl:                "http://localhost:8080",
+		projectIDBySessionNumCalls: 1,
+		storeMockSetup: func(store *mockdb.MockStore) {
+		},
+		code: 403,
+		err: "The ownerFilter provided does not allow access for the logged in user\n",
+		validOwner: false,
 	}}
 
 	for _, tt := range testCases {
@@ -572,7 +587,7 @@ func TestProviderCallback(t *testing.T) {
 			}
 			tc.storeMockSetup(store)
 
-			s, _ := newDefaultServer(t, store, clientFactory)
+			s, _ := newDefaultServer(t, store, clientFactory, tc.validOwner)
 			s.cfg.Provider = serverconfig.ProviderConfig{
 				GitHub: &serverconfig.GitHubConfig{
 					OAuthClientConfig: serverconfig.OAuthClientConfig{
@@ -658,6 +673,7 @@ func TestProviderCallback(t *testing.T) {
 					},
 					RemoteUser:     tc.remoteUser,
 					ProviderConfig: tc.config,
+					OwnerFilter: sql.NullString{String: "TestOwner", Valid: true},
 				}, nil).Times(tc.projectIDBySessionNumCalls)
 
 			if tc.code < http.StatusBadRequest {
@@ -683,6 +699,12 @@ func TestProviderCallback(t *testing.T) {
 				if resp.Header().Get("Location") != tc.redirectUrl {
 					t.Errorf("Unexpected redirect URL: %v", resp.Header().Get("Location"))
 				}
+			}
+			if (tc.code == http.StatusForbidden) && tc.err != "" {
+				if string(body) != tc.err {
+					t.Errorf("Unexpected error message: %q", string(body))
+				}
+				return
 			}
 			if tc.err != "" {
 				if string(body) != tc.err {

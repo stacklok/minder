@@ -86,6 +86,11 @@ type GitHub struct {
 // Ensure that the GitHub client implements the GitHub interface
 var _ provifv1.GitHub = (*GitHub)(nil)
 
+type GithubLite struct {
+}
+
+var _ provifv1.GithubLite = (*GithubLite)(nil)
+
 // ClientService is an interface for GitHub operations
 // It is used to mock GitHub operations in tests, but in order to generate
 // mocks, the interface must be exported
@@ -171,6 +176,25 @@ func NewGitHub(
 		ghcrwrap:             ghcr.FromGitHubClient(client, delegate.GetOwner()),
 		gitConfig:            gitConfig,
 	}
+}
+
+// Check if the user is a member of the GH organization
+func (c *GithubLite) IsMemberInOrganization(ctx context.Context, token *oauth2.Token, org , user string) (bool, error) {
+	ghClient := github.NewClient(nil).WithAuthToken(token.AccessToken)
+	member, _, err := ghClient.Organizations.IsMember(ctx, org, user)
+	if err != nil {
+		return false, fmt.Errorf("error checking if member %s is in organization: %s, %w", user, org, err)
+	}
+	return member, nil
+}
+// Get Login by token
+func (c *GithubLite) GetLoginByToken(ctx context.Context, token *oauth2.Token) (string, error) {
+	ghClient := github.NewClient(nil).WithAuthToken(token.AccessToken)
+	user, _, err := ghClient.Users.Get(ctx, "")
+	if err != nil {
+		return "", fmt.Errorf("error getting user login: %w", err)
+	}
+	return *user.Login, nil
 }
 
 // CanImplement returns true/false depending on whether the Provider

@@ -72,6 +72,7 @@ import (
 	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 const metricsPath = "/metrics"
@@ -113,6 +114,7 @@ type Server struct {
 	providerAuthManager manager.AuthManager
 	projectCreator      projects.ProjectCreator
 	projectDeleter      projects.ProjectDeleter
+	ghLite				provifv1.GithubLite
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
@@ -177,6 +179,7 @@ func NewServer(
 		idClient:            idClient,
 		projectCreator:      projectCreator,
 		projectDeleter:      projectDeleter,
+		ghLite: 	     &ghprov.GithubLite{},
 	}
 }
 

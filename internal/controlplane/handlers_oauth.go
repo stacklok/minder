@@ -290,6 +290,22 @@ func (s *Server) processOAuthCallback(ctx context.Context, w http.ResponseWriter
 	if err != nil {
 		return fmt.Errorf("error encoding token: %w", err)
 	}
+ 	login, err := s.ghLite.GetLoginByToken(ctx, token);
+	if (err != nil) {
+		return fmt.Errorf("error getting login: %w", err)
+	}
+	// Verify if the token user is a member of the ownerFilter (Organization)
+	if (stateData.OwnerFilter.Valid) {
+		member, err := s.ghLite.IsMemberInOrganization(ctx, token, stateData.OwnerFilter.String, login)
+		if err != nil {
+			return fmt.Errorf("error checking organization membership: %w", err)
+		}
+
+		if !member {
+			return newHttpError(http.StatusForbidden, "Invalid OwnerFilter Provided").SetContents(
+				"The ownerFilter value provided does not allow access for the logged in user")
+		}
+	} 
 
 	var errConfig providers.ErrProviderInvalidConfig
 

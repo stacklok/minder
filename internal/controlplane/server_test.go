@@ -42,7 +42,9 @@ import (
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers"
+
 	ghclient "github.com/stacklok/minder/internal/providers/github/clients"
+	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
 	ghService "github.com/stacklok/minder/internal/providers/github/service"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -77,6 +79,7 @@ func newDefaultServer(
 	t *testing.T,
 	mockStore *mockdb.MockStore,
 	ghClientFactory ghclient.GitHubClientFactory,
+	validOwner bool,
 ) (*Server, events.Interface) {
 	t.Helper()
 
@@ -115,7 +118,9 @@ func newDefaultServer(
 		nil,
 		ghClientFactory,
 	)
-
+	mockGhLite := mockgh.NewMockGithubLite(ctrl)
+	mockGhLite.EXPECT().GetLoginByToken(gomock.Any(), gomock.Any()).Return("TestOwner", nil).AnyTimes()
+	mockGhLite.EXPECT().IsMemberInOrganization(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(validOwner, nil).AnyTimes()
 	server := &Server{
 		store:         mockStore,
 		evt:           evt,
@@ -127,11 +132,11 @@ func newDefaultServer(
 		ghProviders:   ghClientService,
 		providerStore: providers.NewProviderStore(mockStore),
 		cryptoEngine:  eng,
+		ghLiteClient:  mockGhLite,
 	}
 
 	return server, evt
 }
-
 func generateTokenKey(t *testing.T) string {
 	t.Helper()
 

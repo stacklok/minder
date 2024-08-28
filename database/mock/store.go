@@ -296,36 +296,6 @@ func (mr *MockStoreMockRecorder) CreateProvider(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProvider", reflect.TypeOf((*MockStore)(nil).CreateProvider), arg0, arg1)
 }
 
-// CreatePullRequest mocks base method.
-func (m *MockStore) CreatePullRequest(arg0 context.Context, arg1 db.CreatePullRequestParams) (db.PullRequest, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreatePullRequest", arg0, arg1)
-	ret0, _ := ret[0].(db.PullRequest)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreatePullRequest indicates an expected call of CreatePullRequest.
-func (mr *MockStoreMockRecorder) CreatePullRequest(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePullRequest", reflect.TypeOf((*MockStore)(nil).CreatePullRequest), arg0, arg1)
-}
-
-// CreateRepository mocks base method.
-func (m *MockStore) CreateRepository(arg0 context.Context, arg1 db.CreateRepositoryParams) (db.Repository, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateRepository", arg0, arg1)
-	ret0, _ := ret[0].(db.Repository)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateRepository indicates an expected call of CreateRepository.
-func (mr *MockStoreMockRecorder) CreateRepository(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRepository", reflect.TypeOf((*MockStore)(nil).CreateRepository), arg0, arg1)
-}
-
 // CreateRuleType mocks base method.
 func (m *MockStore) CreateRuleType(arg0 context.Context, arg1 db.CreateRuleTypeParams) (db.RuleType, error) {
 	m.ctrl.T.Helper()
@@ -413,20 +383,6 @@ func (m *MockStore) DeleteAllPropertiesForEntity(arg0 context.Context, arg1 uuid
 func (mr *MockStoreMockRecorder) DeleteAllPropertiesForEntity(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAllPropertiesForEntity", reflect.TypeOf((*MockStore)(nil).DeleteAllPropertiesForEntity), arg0, arg1)
-}
-
-// DeleteArtifact mocks base method.
-func (m *MockStore) DeleteArtifact(arg0 context.Context, arg1 uuid.UUID) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteArtifact", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteArtifact indicates an expected call of DeleteArtifact.
-func (mr *MockStoreMockRecorder) DeleteArtifact(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteArtifact", reflect.TypeOf((*MockStore)(nil).DeleteArtifact), arg0, arg1)
 }
 
 // DeleteEntity mocks base method.
@@ -599,34 +555,6 @@ func (m *MockStore) DeleteProvider(arg0 context.Context, arg1 db.DeleteProviderP
 func (mr *MockStoreMockRecorder) DeleteProvider(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteProvider", reflect.TypeOf((*MockStore)(nil).DeleteProvider), arg0, arg1)
-}
-
-// DeletePullRequest mocks base method.
-func (m *MockStore) DeletePullRequest(arg0 context.Context, arg1 db.DeletePullRequestParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeletePullRequest", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeletePullRequest indicates an expected call of DeletePullRequest.
-func (mr *MockStoreMockRecorder) DeletePullRequest(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePullRequest", reflect.TypeOf((*MockStore)(nil).DeletePullRequest), arg0, arg1)
-}
-
-// DeleteRepository mocks base method.
-func (m *MockStore) DeleteRepository(arg0 context.Context, arg1 uuid.UUID) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteRepository", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteRepository indicates an expected call of DeleteRepository.
-func (mr *MockStoreMockRecorder) DeleteRepository(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRepository", reflect.TypeOf((*MockStore)(nil).DeleteRepository), arg0, arg1)
 }
 
 // DeleteRuleType mocks base method.
@@ -2235,20 +2163,6 @@ func (mr *MockStoreMockRecorder) UpdateProvider(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProvider", reflect.TypeOf((*MockStore)(nil).UpdateProvider), arg0, arg1)
 }
 
-// UpdateReminderLastSentForRepositories mocks base method.
-func (m *MockStore) UpdateReminderLastSentForRepositories(arg0 context.Context, arg1 []uuid.UUID) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateReminderLastSentForRepositories", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateReminderLastSentForRepositories indicates an expected call of UpdateReminderLastSentForRepositories.
-func (mr *MockStoreMockRecorder) UpdateReminderLastSentForRepositories(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateReminderLastSentForRepositories", reflect.TypeOf((*MockStore)(nil).UpdateReminderLastSentForRepositories), arg0, arg1)
-}
-
 // UpdateRuleType mocks base method.
 func (m *MockStore) UpdateRuleType(arg0 context.Context, arg1 db.UpdateRuleTypeParams) (db.RuleType, error) {
 	m.ctrl.T.Helper()
@@ -2292,21 +2206,6 @@ func (m *MockStore) UpsertAccessToken(arg0 context.Context, arg1 db.UpsertAccess
 func (mr *MockStoreMockRecorder) UpsertAccessToken(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertAccessToken", reflect.TypeOf((*MockStore)(nil).UpsertAccessToken), arg0, arg1)
-}
-
-// UpsertArtifact mocks base method.
-func (m *MockStore) UpsertArtifact(arg0 context.Context, arg1 db.UpsertArtifactParams) (db.Artifact, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpsertArtifact", arg0, arg1)
-	ret0, _ := ret[0].(db.Artifact)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpsertArtifact indicates an expected call of UpsertArtifact.
-func (mr *MockStoreMockRecorder) UpsertArtifact(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertArtifact", reflect.TypeOf((*MockStore)(nil).UpsertArtifact), arg0, arg1)
 }
 
 // UpsertBundle mocks base method.
@@ -2395,21 +2294,6 @@ func (m *MockStore) UpsertPropertyValueV1(arg0 context.Context, arg1 db.UpsertPr
 func (mr *MockStoreMockRecorder) UpsertPropertyValueV1(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertPropertyValueV1", reflect.TypeOf((*MockStore)(nil).UpsertPropertyValueV1), arg0, arg1)
-}
-
-// UpsertPullRequest mocks base method.
-func (m *MockStore) UpsertPullRequest(arg0 context.Context, arg1 db.UpsertPullRequestParams) (db.PullRequest, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpsertPullRequest", arg0, arg1)
-	ret0, _ := ret[0].(db.PullRequest)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpsertPullRequest indicates an expected call of UpsertPullRequest.
-func (mr *MockStoreMockRecorder) UpsertPullRequest(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertPullRequest", reflect.TypeOf((*MockStore)(nil).UpsertPullRequest), arg0, arg1)
 }
 
 // UpsertRuleInstance mocks base method.

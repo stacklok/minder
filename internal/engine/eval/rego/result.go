@@ -16,6 +16,7 @@
 package rego
 
 import (
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -71,15 +72,26 @@ func (*denyByDefaultEvaluator) getQuery() func(r *rego.Rego) {
 	return rego.Query(RegoQueryPrefix)
 }
 
-func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet) error {
+//go:embed regoDenyByDefault.tmpl
+var regoDenyByDefaultTemplate string
+
+func (e *denyByDefaultEvaluator) parseResult(rs rego.ResultSet) error {
 	if len(rs) == 0 {
-		return engerrors.NewErrEvaluationFailed("no results")
+		return engerrors.NewDetailedErrEvaluationFailed(
+			"no results",
+			regoDenyByDefaultTemplate,
+			"Malformed Rego: no results",
+		)
 	}
 
 	res := rs[0]
 
 	if len(res.Expressions) == 0 {
-		return engerrors.NewErrEvaluationFailed("no expressions")
+		return engerrors.NewDetailedErrEvaluationFailed(
+			"no expressions",
+			regoDenyByDefaultTemplate,
+			"Malformed Rego: no expressions",
+		)
 	}
 
 	// get first expression
@@ -87,7 +99,11 @@ func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet) error {
 	exprVal := exprRaw.Value
 	expr, ok := exprVal.(map[string]any)
 	if !ok {
-		return engerrors.NewErrEvaluationFailed("unable to get result expression")
+		return engerrors.NewDetailedErrEvaluationFailed(
+			"unable to get result expression",
+			regoDenyByDefaultTemplate,
+			"Malformed Rego: unable to get result expression",
+		)
 	}
 
 	// check if skipped
@@ -103,19 +119,37 @@ func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet) error {
 	// check if allowed
 	allowed, ok := expr["allow"]
 	if !ok {
-		return engerrors.NewErrEvaluationFailed("unable to get allow result")
+		return engerrors.NewDetailedErrEvaluationFailed(
+			"unable to get allow result",
+			regoDenyByDefaultTemplate,
+			"Malformed Rego: unable to get allow result",
+		)
 	}
 
 	allowedBool, ok := allowed.(bool)
 	if !ok {
-		return engerrors.NewErrEvaluationFailed("allow result is not a bool")
+		return engerrors.NewDetailedErrEvaluationFailed(
+			"allow result is not a bool",
+			regoDenyByDefaultTemplate,
+			"allow result is not a bool",
+		)
 	}
 
 	if allowedBool {
 		return nil
 	}
 
-	return engerrors.NewErrEvaluationFailed("denied")
+	// extract message from rego
+	msg, ok := expr["msg"]
+	if !ok {
+		msg = "entity does not conform"
+	}
+
+	return engerrors.NewDetailedErrEvaluationFailed(
+		"denied",
+		regoDenyByDefaultTemplate,
+		fmt.Sprintf("Denied: %s", msg),
+	)
 }
 
 type constraintsEvaluator struct {

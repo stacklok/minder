@@ -17,6 +17,7 @@ package vulncheck
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"sort"
 	"strings"
@@ -50,6 +51,9 @@ func NewVulncheckEvaluator(ghcli provifv1.GitHub) (*Evaluator, error) {
 	}, nil
 }
 
+//go:embed vulncheckTemplate.tmpl
+var vulncheckTemplate string
+
 // Eval implements the Evaluator interface.
 func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Result) error {
 	vulnerablePackages, err := e.getVulnerableDependencies(ctx, pol, res)
@@ -58,7 +62,13 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 	}
 
 	if len(vulnerablePackages) > 0 {
-		return evalerrors.NewErrEvaluationFailed("vulnerable packages: %s", strings.Join(vulnerablePackages, ","))
+		return evalerrors.NewDetailedErrEvaluationFailed(
+			fmt.Sprintf("vulnerable packages: %s", strings.Join(vulnerablePackages, ",")),
+			vulncheckTemplate,
+			map[string]any{
+				"packages": vulnerablePackages,
+			},
+		)
 	}
 
 	return nil

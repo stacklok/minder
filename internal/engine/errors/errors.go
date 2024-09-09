@@ -20,6 +20,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
+	"text/template"
 
 	"github.com/stacklok/minder/internal/db"
 )
@@ -41,6 +43,42 @@ func (e *EvaluationError) Unwrap() error {
 // Error implements the error interface for EvaluationError.
 func (e *EvaluationError) Error() string {
 	return fmt.Sprintf("%v: %s", e.Base, e.Msg)
+}
+
+type DetailedEvaluationError struct {
+	Base     error
+	Msg      string
+	Template string
+	Args     any
+}
+
+func (e *DetailedEvaluationError) Unwrap() error {
+	return e.Base
+}
+
+func (e *DetailedEvaluationError) Error() string {
+	return fmt.Sprintf("%v: %s", e.Base, e.Msg)
+}
+
+func (e *DetailedEvaluationError) Details() string {
+	tmpl, err := template.New("error").Parse(e.Template)
+	if err != nil {
+		return e.Error()
+	}
+	var buf strings.Builder
+	if err := tmpl.Execute(&buf, e.Args); err != nil {
+		return e.Error()
+	}
+	return buf.String()
+}
+
+func NewDetailedErrEvaluationFailed(msg string, template string, args any) error {
+	return &DetailedEvaluationError{
+		Base:     ErrEvaluationFailed,
+		Msg:      msg,
+		Template: template,
+		Args:     args,
+	}
 }
 
 // ErrEvaluationFailed is an error that occurs during evaluation of a rule.
@@ -133,10 +171,14 @@ func ErrorAsEvalDetails(err error) string {
 	var evalErr *EvaluationError
 	if errors.As(err, &evalErr) {
 		return evalErr.Msg
-	} else if err != nil {
+	}
+	var detailedErr *DetailedEvaluationError
+	if errors.As(err, &detailedErr) {
+		return detailedErr.Details()
+	}
+	if err != nil {
 		return err.Error()
 	}
-
 	return ""
 }
 

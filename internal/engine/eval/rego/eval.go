@@ -72,7 +72,9 @@ func (*hook) Print(_ print.Context, msg string) error {
 var _ print.Hook = (*hook)(nil)
 
 // NewRegoEvaluator creates a new rego evaluator
-func NewRegoEvaluator(cfg *minderv1.RuleType_Definition_Eval_Rego) (*Evaluator, error) {
+func NewRegoEvaluator(
+	cfg *minderv1.RuleType_Definition_Eval_Rego,
+) (*Evaluator, error) {
 	c, err := parseConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse rego config: %w", err)

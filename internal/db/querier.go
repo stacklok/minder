@@ -268,6 +268,7 @@ type Querier interface {
 	UpsertInstallationID(ctx context.Context, arg UpsertInstallationIDParams) (ProviderGithubAppInstallation, error)
 	UpsertLatestEvaluationStatus(ctx context.Context, arg UpsertLatestEvaluationStatusParams) error
 	UpsertProfileForEntity(ctx context.Context, arg UpsertProfileForEntityParams) (EntityProfile, error)
+	UpsertProperties(ctx context.Context, props json.RawMessage) error
 	UpsertProperty(ctx context.Context, arg UpsertPropertyParams) (Property, error)
 	UpsertPullRequest(ctx context.Context, arg UpsertPullRequestParams) (PullRequest, error)
 	// Copyright 2024 Stacklok, Inc

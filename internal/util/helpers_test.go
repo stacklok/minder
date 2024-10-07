@@ -33,10 +33,11 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
+
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // TestGetConfigDirPath tests the GetConfigDirPath function
@@ -419,9 +420,9 @@ func TestLoadCredentials(t *testing.T) {
 }
 
 // TestRevokeToken tests the RevokeToken function
-func TestRevokeToken(t *testing.T) {
+// func TestRevokeToken(t *testing.T) {
 
-}
+// }
 
 // TestGetJsonFromProto tests the GetJsonFromProto function
 func TestGetJsonFromProto(t *testing.T) {

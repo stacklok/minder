@@ -65,6 +65,7 @@ import (
 	"github.com/mindersec/minder/internal/ruletypes"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	mgrif "github.com/mindersec/minder/pkg/providers/v1/manager"
 )
 
 const metricsPath = "/metrics"
@@ -104,7 +105,7 @@ type Server struct {
 	ghClient            ghprov.ClientService
 	providerManager     manager.ProviderManager
 	sessionService      session.ProviderSessionService
-	providerAuthManager manager.AuthManager
+	providerAuthManager mgrif.AuthManager
 	projectCreator      projects.ProjectCreator
 	projectDeleter      projects.ProjectDeleter
 
@@ -142,7 +143,7 @@ func NewServer(
 	ruleService ruletypes.RuleTypeService,
 	ghProviders service.GitHubProviderService,
 	providerManager manager.ProviderManager,
-	providerAuthManager manager.AuthManager,
+	providerAuthManager mgrif.AuthManager,
 	providerStore providers.ProviderStore,
 	sessionService session.ProviderSessionService,
 	projectDeleter projects.ProjectDeleter,

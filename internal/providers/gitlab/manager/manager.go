@@ -25,6 +25,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/credentials"
 	"github.com/mindersec/minder/internal/providers/gitlab"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
+	mgrif "github.com/mindersec/minder/pkg/providers/v1/manager"
 )
 
 // tokenExpirationThreshold is the time before the token expires that we should
@@ -46,6 +47,9 @@ type providerClassManager struct {
 	currentWebhookSecret   string
 	previousWebhookSecrets []string
 }
+
+// Ensure that providerClassManager implements the ProviderClassManager interface
+var _ mgrif.ProviderClassManager = &providerClassManager{}
 
 // NewGitLabProviderClassManager creates a new provider class manager for the dockerhub provider
 func NewGitLabProviderClassManager(
